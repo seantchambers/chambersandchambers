@@ -130,6 +130,29 @@
     border-bottom-color: var(--ink);
   }
 
+  /* Enso circle — faint charcoal hand-drawn mark on the right */
+  .enso {
+    position: absolute;
+    right: clamp(2rem, 6vw, 6rem);
+    top: 50%;
+    transform: translateY(-62%) rotate(12deg);
+    width: clamp(12rem, 34vw, 24rem);
+    height: clamp(12rem, 34vw, 24rem);
+    pointer-events: none;
+    color: #1a1714;
+    opacity: 0.7;
+    z-index: 0;
+  }
+
+  body > *:not(.enso) {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (max-width: 700px) {
+    .enso { display: none; }
+  }
+
   /* Instagram grid — reserved, hidden until wired up.
      To enable: remove the `hidden` attribute on the <section> below,
      and replace the placeholder tiles with embed code from your chosen service. */
@@ -167,6 +190,23 @@
 </head>
 <body>
 
+  <svg class="enso" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <filter id="enso-rough" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="7"/>
+        <feDisplacementMap in="SourceGraphic" scale="5"/>
+      </filter>
+    </defs>
+    <path d="M 45 175
+             C 55 100, 120 45, 205 42
+             C 292 45, 360 112, 362 200
+             C 360 290, 290 358, 202 360
+             C 118 358, 55 295, 48 222"
+          fill="currentColor"
+          stroke="none"
+          filter="url(#enso-rough)"/>
+  </svg>
+
   <header class="meta">
     <span>Chambers &amp; Chambers</span>
     <span>Est. Melbourne</span>
@@ -174,8 +214,8 @@
 
   <main class="hero">
     <h1 class="mark">
-      Chambers<br>
-      <em>&amp;</em> Chambers
+      chambers<br>
+      <em>&amp; chambers</em>
     </h1>
     <p class="tagline">
       An open, collaborative design practice. A new site is being prepared.
