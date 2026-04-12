@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chambers & Chambers — Architecture</title>
+<meta name="description" content="Chambers & Chambers. An open, collaborative design practice based in Melbourne.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f2ede5;
+    --ink: #1d1b17;
+    --ink-soft: #6b655c;
+    --rule: #d8d1c4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+    padding: clamp(2rem, 6vw, 6rem) clamp(1.5rem, 5vw, 5rem);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Top bar */
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .meta > span:last-child,
+  .foot > div:last-child {
+    /* Compensate for trailing letter-spacing so the final letter aligns flush with the right margin */
+    margin-right: -0.15em;
+  }
+
+  /* Hero */
+  .hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(4rem, 12vw, 10rem) 0;
+    max-width: 50ch;
+  }
+
+  .mark {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 300;
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin-bottom: 1.5rem;
+  }
+
+  .mark em {
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  .tagline {
+    font-size: clamp(1rem, 1.4vw, 1.15rem);
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 38ch;
+    font-weight: 300;
+  }
+
+  .sig {
+    display: block;
+    margin-top: 1.25rem;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-style: italic;
+    font-size: 1.15em;
+    color: var(--ink);
+  }
+
+  /* Footer — mirrors .meta (top bar) structure */
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--rule);
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    line-height: 1.8;
+    color: var(--ink-soft);
+  }
+
+  .foot .label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--ink-soft);
+    opacity: 0.6;
+  }
+
+  .foot > div:last-child {
+    text-align: right;
+  }
+
+  .foot a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s ease, color 0.3s ease;
+  }
+
+  .foot a:hover {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+  }
+
+  /* Instagram grid — reserved, hidden until wired up.
+     To enable: remove the `hidden` attribute on the <section> below,
+     and replace the placeholder tiles with embed code from your chosen service. */
+  .feed {
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .feed .label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 1.5rem;
+  }
+
+  .feed-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+
+  .feed-grid .tile {
+    aspect-ratio: 1 / 1;
+    background: var(--rule);
+    opacity: 0.5;
+  }
+
+  @media (max-width: 640px) {
+    .mobile-hide { display: none; }
+    .feed-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+  <header class="meta">
+    <span>Chambers &amp; Chambers</span>
+    <span>Est. Melbourne</span>
+  </header>
+
+  <main class="hero">
+    <h1 class="mark">
+      Chambers<br>
+      <em>&amp;</em> Chambers
+    </h1>
+    <p class="tagline">
+      An open, collaborative design practice. A new site is being prepared.
+      In the meantime, please be in touch.
+      <span class="sig">— Sean</span>
+    </p>
+  </main>
+
+  <footer class="foot">
+    <div>
+      <div class="label">Correspondence</div>
+      <span class="mobile-hide"><a href="mailto:sean@chambersandchambers.co">sean@chambersandchambers.co</a><br></span>
+      <a href="tel:+61447727477">0447 727 477</a>
+    </div>
+    <div>
+      <div class="label">Location</div>
+      Melbourne<span class="mobile-hide"> · Barnawartha · Byron Shire</span>
+    </div>
+  </footer>
+
+  <!-- Remove `hidden` and wire up feed when ready -->
+  <section class="feed" hidden>
+    <div class="label">Recent work — Instagram</div>
+    <div class="feed-grid">
+      <div class="tile"></div>
+      <div class="tile"></div>
+      <div cla
