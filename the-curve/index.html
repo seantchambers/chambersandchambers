@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Curve — Chambers &amp; Chambers</title>
+<meta name="description" content="An inquiry into curves made from straight lines: pen plotters, Archimedes, Xenakis and the Philips Pavilion, and Georg Nees.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f2ede5;
+    --ink: #1d1b17;
+    --ink-soft: #6b655c;
+    --rule: #d8d1c4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+    padding: clamp(2.25rem, 4.5vw, 4.5rem) clamp(1.5rem, 5vw, 5rem) clamp(1.5rem, 3vw, 3rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.5rem, 6vw, 4.5rem);
+  }
+
+  a { color: inherit; }
+
+  .meta, .foot, .label, .controls, figcaption {
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .meta { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  .meta a { text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .3s ease, color .3s ease; }
+  .meta a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+  .meta > span:last-child, .foot > div:last-child { margin-right: -0.15em; }
+
+  .opening {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: center;
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 300;
+    font-size: clamp(2.8rem, 8vw, 6rem);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  h1 em { font-style: italic; }
+
+  .lede {
+    margin-top: 1.5rem;
+    font-size: clamp(1rem, 1.4vw, 1.15rem);
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 38ch;
+  }
+
+  figure { display: flex; flex-direction: column; gap: .75rem; min-width: 0; }
+  canvas { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; max-width: 100%; }
+
+  .controls { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .controls label { display: flex; align-items: center; gap: .75rem; flex: 1 1 12rem; min-width: 0; }
+  .controls input[type=range] { flex: 1; min-width: 0; accent-color: var(--ink); }
+  .count { color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  button {
+    font: inherit; letter-spacing: inherit; text-transform: inherit;
+    color: var(--ink); background: transparent; cursor: pointer;
+    border: none; border-bottom: 1px solid var(--ink); padding: .1rem 0;
+  }
+  button:hover { color: var(--ink-soft); border-bottom-color: var(--ink-soft); }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+
+  .essay {
+    display: flex; flex-direction: column; gap: 1.25rem;
+    max-width: 62ch;
+    font-size: clamp(1rem, 1.25vw, 1.08rem);
+    line-height: 1.75;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  .essay h2 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 300; font-style: italic;
+    font-size: clamp(1.6rem, 2.6vw, 2rem);
+    line-height: 1.2;
+    margin-top: 1rem;
+  }
+  .essay em { font-style: italic; }
+
+  .studies-wrap { display: flex; flex-direction: column; gap: 1.5rem; padding-top: 2.5rem; border-top: 1px solid var(--rule); }
+  .studies-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .studies {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+  }
+  .study h3 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400; font-size: 1.35rem; line-height: 1.2;
+  }
+  .study p { font-size: .9rem; line-height: 1.55; color: var(--ink-soft); }
+
+  .reading { display: flex; flex-direction: column; gap: 1rem; max-width: 62ch; padding-top: 2.5rem; border-top: 1px solid var(--rule); }
+  .reading ul { list-style: none; display: flex; flex-direction: column; gap: .8rem; }
+  .reading li { line-height: 1.55; }
+  .reading a { text-decoration: none; border-bottom: 1px solid var(--rule); transition: border-color .3s ease; }
+  .reading a:hover { border-bottom-color: var(--ink); }
+  .reading span { color: var(--ink-soft); }
+
+  .foot {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem;
+    padding-top: 2rem; border-top: 1px solid var(--rule); line-height: 1.8;
+  }
+  .foot .label { display: block; margin-bottom: .5rem; opacity: .6; }
+  .foot > div:last-child { text-align: right; }
+  .foot a { text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .3s ease, color .3s ease; }
+  .foot a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+  @media (max-width: 1000px) { .studies { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 760px) { .opening { grid-template-columns: 1fr; } }
+  @media (max-width: 460px) { .studies { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .mobile-hide { display: none; } }
+</style>
+</head>
+<body>
+
+  <header class="meta">
+    <a href="/">Chambers &amp; Chambers</a>
+    <span>Inquiry</span>
+  </header>
+
+  <section class="opening">
+    <div>
+      <h1>The <em>curve</em></h1>
+      <p class="lede">A pen plotter can only draw straight lines. Every curve it makes is assembled from them. So, it turns out, is a surprising amount of architecture.</p>
+    </div>
+    <figure>
+      <canvas id="hero" width="1000" height="1000" aria-label="Straight lines whose crossings form smooth curves"></canvas>
+      <div class="controls">
+        <label for="hero-n">Lines <input id="hero-n" type="range" min="4" max="64" value="28"> <span class="count" id="hero-count"></span></label>
+        <button type="button" id="hero-replot">Replot</button>
+      </div>
+    </figure>
+  </section>
+
+  <article class="essay">
+    <p>Ask a plotter for a circle and its firmware quietly breaks the arc into short chords, each a straight move of the pen. Make the chords short enough and the corners between them fall below what the eye can see. The curve is something we assemble afterwards.</p>
+    <p>This is an old trick. Archimedes pinned down π by fitting polygons inside and outside a circle and doubling their sides until he reached 96. No curved line was measured. He caged the circle between straight edges and read the answer from the gap.</p>
+
+    <h2>Forty-six strings and a pavilion</h2>
+    <p>Iannis Xenakis trained as an engineer and worked for Le Corbusier through the 1950s while teaching himself to compose. For <em>Metastaseis</em> (1953–54) he gave each of 46 string players a separate part and drew the score on graph paper: pitch up the side, time along the bottom, each player's glissando a single straight line. Together the lines produced curves that no single line contained.</p>
+    <p>When the design of the Philips Pavilion for the 1958 Brussels World's Fair came to him, he built the same geometry in concrete. A hyperbolic paraboloid is curved in two directions, yet two families of straight lines lie across its surface. That made it buildable: the shells were cast as small precast panels following the straight rulings. The music and the building answered one question. How do you move from one point to another without a break?</p>
+
+    <h2>Gravel</h2>
+    <p>In 1968 Georg Nees drew <em>Schotter</em> on a Zuse Graphomat, a flatbed plotter fed by punched tape: rows of squares that begin in order and fall into disorder down the sheet. A few years later he was plotting roof trusses with the architect Ludwig Rase. Plotters and buildings have shared a room for a long time.</p>
+    <p>Xenakis came back to the graph paper in 1977 with UPIC, a drawing tablet that played what you drew. Time ran left to right, pitch up the page. The score had become the instrument.</p>
+  </article>
+
+  <section class="studies-wrap" aria-labelledby="studies-title">
+    <div class="studies-head">
+      <span class="label" id="studies-title">Four studies, straight lines only</span>
+      <button type="button" id="replot-all" class="label">Replot all</button>
+    </div>
+    <div class="studies" id="studies"></div>
+  </section>
+
+  <section class="reading">
+    <span class="label">Further reading</span>
+    <ul>
+      <li><a href="https://www.iannis-xenakis.org/en/?p=4022" target="_blank" rel="noopener">Ruled surfaces in Xenakis</a> <span>— from the Metastaseis graphs to the Philips Pavilion.</span></li>
+      <li><a href="https://books.openbookpublishers.com/10.11647/obp.0390/ch28.xhtml" target="_blank" rel="noopener">Meta-Xenakis, ch. 28</a> <span>— open-access chapter on the pavilion's genesis.</span></li>
+      <li><a href="https://www.iannis-xenakis.org/en/?p=3939" target="_blank" rel="noopener">UPIC</a> <span>— the drawing tablet and Mycènes Alpha.</span></li>
+      <li><a href="https://collections.vam.ac.uk/item/O221321/schotter-print-nees-georg/" target="_blank" rel="noopener">Schotter at the V&amp;A</a> <span>— Nees's print and the Graphomat.</span></li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    <div>
+      <div class="label">Correspondence</div>
+      <span class="mobile-hide"><a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;sean&#64;chambersandchambers.co">sean&#64;chambersandchambers.co</a><br></span>
+      <a href="tel:+61447727477">0447 727 477</a>
+    </div>
+    <div>
+      <div class="label">Location</div>
+      Melbourne<span class="mobile-hide"> · Barnawartha · Byron Shire</span>
+    </div>
+  </footer>
+
+<script>
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var INK = '#1d1b17', SOFT = '#6b655c', PAPER = '#f2ede5', RULE = '#d8d1c4';
+
+  function rng(seed) {
+    return function () {
+      seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function lerp(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; }
+  function seg(p, q, c, a) { return [p[0], p[1], q[0], q[1], c, a == null ? 0.8 : a]; }
+
+  var hero = {
+    unit: function (n) { return n + ' × 4'; },
+    axes: true,
+    segs: function (n) {
+      var c = 500, r = 430, s = [], quads = [[1, -1], [1, 1], [-1, 1], [-1, -1]];
+      quads.forEach(function (q, qi) {
+        for (var i = 0; i <= n; i++) {
+          var t = i / n;
+          s.push(seg([c + q[0] * r * t, c], [c, c + q[1] * r * (1 - t)], qi % 2));
+        }
+      });
+      return s;
+    }
+  };
+
+  var studies = [
+    { title: 'Hypar', min: 6, max: 60, val: 24, unit: function (n) { return n + ' × 2'; },
+      text: 'Two families of straight rulings across a skewed quadrilateral.',
+      segs: function (n) {
+        var A = [120, 430], B = [540, 110], C = [890, 480], D = [420, 890], s = [];
+        for (var i = 0; i <= n; i++) {
+          var t = i / n;
+          s.push(seg(lerp(A, B, t), lerp(D, C, t), 0));
+          s.push(seg(lerp(A, D, t), lerp(B, C, t), 1));
+        }
+        return s;
+      } },
+    { title: 'Glissandi', min: 8, max: 80, val: 46, unit: function (n) { return n + ' strings'; },
+      text: 'Strings sliding away from a unison, after Metastaseis.',
+      segs: function (n) {
+        var s = [];
+        for (var i = 0; i <= n; i++) {
+          var t = i / n;
+          s.push(seg([80 + 400 * t, 500], [920, 90 + 820 * t], 0));
+          s.push(seg([80 + 400 * t, 500], [920, 910 - 820 * t], 1, 0.5));
+        }
+        return s;
+      } },
+    { title: 'Schotter', min: 0, max: 100, val: 70, unit: function (n) { return n + '% disorder'; },
+      text: 'After Georg Nees, 1968. Replot draws a fresh sheet.',
+      seed: 1968, reseed: true,
+      segs: function (n, st) {
+        var r = rng(st.seed), cols = 12, rows = 22, sz = 37, x0 = (1000 - cols * sz) / 2, y0 = (1000 - rows * sz) / 2, s = [];
+        for (var row = 0; row < rows; row++) {
+          var amt = (row / (rows - 1)) * (n / 100);
+          for (var col = 0; col < cols; col++) {
+            var rot = (r() * 2 - 1) * amt * Math.PI / 3;
+            var cx = x0 + (col + 0.5) * sz + (r() * 2 - 1) * amt * sz * 0.45;
+            var cy = y0 + (row + 0.5) * sz + (r() * 2 - 1) * amt * sz * 0.45;
+            var pts = [];
+            for (var k = 0; k < 4; k++) {
+              var a = rot + Math.PI / 4 + k * Math.PI / 2, h = sz * 0.7071;
+              pts.push([cx + h * Math.cos(a), cy + h * Math.sin(a)]);
+            }
+            for (var k2 = 0; k2 < 4; k2++) s.push(seg(pts[k2], pts[(k2 + 1) % 4], 0));
+          }
+        }
+        return s;
+      } },
+    { title: 'Chords', min: 24, max: 300, val: 160, unit: function (n, st) { return n + ' · ×' + st.ks[st.ki]; },
+      text: 'Point i joined to point k·i around a circle. Replot changes k.',
+      ks: [2, 3, 4, 5, 7, 9, 21, 34], ki: 0,
+      onReplot: function (st) { st.ki = (st.ki + 1) % st.ks.length; },
+      segs: function (n, st) {
+        var k = st.ks[st.ki], s = [];
+        function p(i) { var a = -Math.PI / 2 + i * 2 * Math.PI / n; return [500 + 420 * Math.cos(a), 500 + 420 * Math.sin(a)]; }
+        for (var i = 0; i < n; i++) s.push(seg(p(i), p((i * k) % n), i < n / 2 ? 0 : 1, 0.65));
+        return s;
+      } }
+  ];
+
+  function frame(st, s, upto) {
+    var ctx = st.ctx;
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, 1000, 1000);
+    if (st.axes) {
+      ctx.strokeStyle = RULE; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(70, 500); ctx.lineTo(930, 500); ctx.moveTo(500, 70); ctx.lineTo(500, 930); ctx.stroke();
+    }
+    ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+    for (var i = 0; i < upto; i++) {
+      var g = s[i];
+      ctx.strokeStyle = g[4] === 0 ? INK : SOFT;
+      ctx.globalAlpha = g[5];
+      ctx.beginPath(); ctx.moveTo(g[0], g[1]); ctx.lineTo(g[2], g[3]); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function draw(st, animate) {
+    var n = parseInt(st.slider.value, 10);
+    st.count.textContent = st.unit(n, st);
+    var s = st.segs(n, st);
+    if (st.anim) { cancelAnimationFrame(st.anim); st.anim = null; }
+    if (!animate || reduce) { frame(st, s, s.length); return; }
+    var i = 0, step = Math.max(1, Math.ceil(s.length / 110));
+    (function tick() {
+      i = Math.min(s.length, i + step);
+      frame(st, s, i);
+      if (i < s.length) st.anim = requestAnimationFrame(tick);
+    })();
+  }
+
+  function replot(st) {
+    if (st.reseed) st.seed = (st.seed * 31 + 17) | 0;
+    if (st.onReplot) st.onReplot(st);
+    draw(st, true);
+  }
+
+  // Hero
+  hero.canvas = document.getElementById('hero');
+  hero.ctx = hero.canvas.getContext('2d');
+  hero.slider = document.getElementById('hero-n');
+  hero.count = document.getElementById('hero-count');
+  hero.slider.addEventListener('input', function () { draw(hero, false); });
+  document.getElementById('hero-replot').addEventListener('click', function () { draw(hero, true); });
+
+  // Studies
+  var host = document.getElementById('studies');
+  studies.forEach(function (st, idx) {
+    var id = 'study-' + idx;
+    var fig = document.createElement('figure');
+    fig.className = 'study';
+    fig.innerHTML =
+      '<canvas width="1000" height="1000" aria-label="' + st.title + '"></canvas>' +
+      '<h3>' + st.title + '</h3><p>' + st.text + '</p>' +
+      '<div class="controls"><label for="' + id + '"><input id="' + id + '" type="range" min="' + st.min + '" max="' + st.max + '" value="' + st.val + '"> <span class="count"></span></label>' +
+      '<button type="button">Replot</button></div>';
+    host.appendChild(fig);
+    st.canvas = fig.querySelector('canvas');
+    st.ctx = st.canvas.getContext('2d');
+    st.slider = fig.querySelector('input');
+    st.count = fig.querySelector('.count');
+    st.slider.addEventListener('input', function () { draw(st, false); });
+    fig.querySelector('button').addEventListener('click', function () { replot(st); });
+  });
+
+  document.getElementById('replot-all').addEventListener('click', function () { studies.forEach(replot); });
+
+  draw(hero, !reduce);
+  studies.forEach(function (st) { draw(st, false); });
+})();
+</script>
+</body>
+</html>

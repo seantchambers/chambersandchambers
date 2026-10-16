@@ -92,6 +92,23 @@
     color: var(--ink);
   }
 
+  .inquiry {
+    align-self: flex-start;
+    margin-top: 2rem;
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule);
+    transition: border-color 0.3s ease, color 0.3s ease;
+  }
+
+  .inquiry:hover {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+  }
+
   /* Footer — mirrors .meta (top bar) structure */
   .foot {
     display: flex;
@@ -222,6 +239,7 @@
       In the meantime, please be in touch.
       <span class="sig">— Sean</span>
     </p>
+    <a class="inquiry" href="/the-curve/">Inquiry · The Curve</a>
   </main>
 
   <footer class="foot">
