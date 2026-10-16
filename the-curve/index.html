@@ -37,17 +37,19 @@
 
   a { color: inherit; }
 
-  .meta, .foot, .label, .controls, figcaption {
+  .meta, .foot, .label, .controls, figcaption, .series {
     font-size: clamp(0.7rem, 0.9vw, 0.8rem);
     letter-spacing: 0.15em;
     text-transform: uppercase;
     color: var(--ink-soft);
   }
 
-  .meta { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
-  .meta a { text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .3s ease, color .3s ease; }
-  .meta a:hover { color: var(--ink); border-bottom-color: var(--ink); }
-  .meta > span:last-child, .foot > div:last-child { margin-right: -0.15em; }
+  .meta { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .meta a, .series a { text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .3s ease, color .3s ease; }
+  .meta a:hover, .series a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+  .series { display: flex; gap: .9rem; flex-wrap: wrap; margin-right: -0.15em; }
+  .series [aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
+  .foot > div:last-child { margin-right: -0.15em; }
 
   .opening {
     display: grid;
@@ -145,7 +147,11 @@
 
   <header class="meta">
     <a href="/">Chambers &amp; Chambers</a>
-    <span>Inquiry</span>
+    <nav class="series" aria-label="Inquiry series">
+      <span>Inquiry</span>
+      <a href="/the-point/">Point</a>
+      <a href="/the-curve/" aria-current="page">Curve</a>
+    </nav>
   </header>
 
   <section class="opening">

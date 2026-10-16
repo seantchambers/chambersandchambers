@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Point — Chambers &amp; Chambers</title>
+<meta name="description" content="An inquiry into the point: Euclid, setting out, Kandinsky, Seurat, and Xenakis's clouds of sound.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f2ede5;
+    --ink: #1d1b17;
+    --ink-soft: #6b655c;
+    --rule: #d8d1c4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+    padding: clamp(2.25rem, 4.5vw, 4.5rem) clamp(1.5rem, 5vw, 5rem) clamp(1.5rem, 3vw, 3rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.5rem, 6vw, 4.5rem);
+  }
+
+  a { color: inherit; }
+
+  .meta, .foot, .label, .controls, .series {
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .meta { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .meta a, .series a { text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .3s ease, color .3s ease; }
+  .meta a:hover, .series a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+  .series { display: flex; gap: .9rem; flex-wrap: wrap; margin-right: -0.15em; }
+  .series [aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
+  .foot > div:last-child { margin-right: -0.15em; }
+
+  .opening {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: center;
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 300;
+    font-size: clamp(2.8rem, 8vw, 6rem);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  h1 em { font-style: italic; }
+
+  .lede {
+    margin-top: 1.5rem;
+    font-size: clamp(1rem, 1.4vw, 1.15rem);
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 38ch;
+  }
+
+  figure { display: flex; flex-direction: column; gap: .75rem; min-width: 0; }
+  canvas { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; max-width: 100%; }
+
+  .controls { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .controls label { display: flex; align-items: center; gap: .75rem; flex: 1 1 12rem; min-width: 0; }
+  .controls input[type=range] { flex: 1; min-width: 0; accent-color: var(--ink); }
+  .count { color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  button {
+    font: inherit; letter-spacing: inherit; text-transform: inherit;
+    color: var(--ink); background: transparent; cursor: pointer;
+    border: none; border-bottom: 1px solid var(--ink); padding: .1rem 0;
+  }
+  button:hover { color: var(--ink-soft); border-bottom-color: var(--ink-soft); }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+
+  .essay {
+    display: flex; flex-direction: column; gap: 1.25rem;
+    max-width: 62ch;
+    font-size: clamp(1rem, 1.25vw, 1.08rem);
+    line-height: 1.75;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  .essay h2 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 300; font-style: italic;
+    font-size: clamp(1.6rem, 2.6vw, 2rem);
+    line-height: 1.2;
+    margin-top: 1rem;
+  }
+  .essay em { font-style: italic; }
+
+  .studies-wrap { display: flex; flex-direction: column; gap: 1.5rem; padding-top: 2.5rem; border-top: 1px solid var(--rule); }
+  .studies-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .studies {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+  }
+  .study h3 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400; font-size: 1.35rem; line-height: 1.2;
+  }
+  .study p { font-size: .9rem; line-height: 1.55; color: var(--ink-soft); }
+
+  .reading { display: flex; flex-direction: column; gap: 1rem; max-width: 62ch; padding-top: 2.5rem; border-top: 1px solid var(--rule); }
+  .reading ul { list-style: none; display: flex; flex-direction: column; gap: .8rem; }
+  .reading li { line-height: 1.55; }
+  .reading a { text-decoration: none; border-bottom: 1px solid var(--rule); transition: border-color .3s ease; }
+  .reading a:hover { border-bottom-color: var(--ink); }
+  .reading span { color: var(--ink-soft); }
+
+  .foot {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem;
+    padding-top: 2rem; border-top: 1px solid var(--rule); line-height: 1.8;
+  }
+  .foot .label { display: block; margin-bottom: .5rem; opacity: .6; }
+  .foot > div:last-child { text-align: right; }
+  .foot a { text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .3s ease, color .3s ease; }
+  .foot a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+  @media (max-width: 1000px) { .studies { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 760px) { .opening { grid-template-columns: 1fr; } }
+  @media (max-width: 460px) { .studies { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .mobile-hide { display: none; } }
+</style>
+</head>
+<body>
+
+  <header class="meta">
+    <a href="/">Chambers &amp; Chambers</a>
+    <nav class="series" aria-label="Inquiry series">
+      <span>Inquiry</span>
+      <a href="/the-point/" aria-current="page">Point</a>
+      <a href="/the-curve/">Curve</a>
+    </nav>
+  </header>
+
+  <section class="opening">
+    <div>
+      <h1>The <em>point</em></h1>
+      <p class="lede">A point has a position and nothing else. Every drawing starts with one, and so does every building.</p>
+    </div>
+    <figure>
+      <canvas id="hero" width="1000" height="1000" aria-label="A sphere and its shadow drawn entirely in dots"></canvas>
+      <div class="controls">
+        <label for="hero-n">Points <input id="hero-n" type="range" min="500" max="14000" step="100" value="6000"> <span class="count" id="hero-count"></span></label>
+        <button type="button" id="hero-replot">Replot</button>
+      </div>
+    </figure>
+  </section>
+
+  <article class="essay">
+    <p>Euclid opens the <em>Elements</em> with it: a point is that which has no part. It has a location but no length, width or depth. Strictly, you can't draw one. Any mark a pen leaves already covers a small area. On a plotter the point is the simplest instruction there is: move, lower the pen, lift it.</p>
+    <p>In practice the point is where everything is set out from. A survey benchmark, a grid intersection, the setting-out point at a portal knee where the column and rafter centrelines cross. In plan a column is a point, and a field of them is the first sketch of a building. Take the walls away and the points are what's left holding it up.</p>
+
+    <h2>Silence and speech</h2>
+    <p>Kandinsky starts in the same place. <em>Point and Line to Plane</em>, published in 1926 as the ninth Bauhaus book, treats the point as the most concise form there is, as close to saying nothing as a mark can get while still saying something. He describes it as the meeting of silence and speech. Then he moves it. A point at the centre of a square sits still. Move it off-centre and the whole square starts to lean.</p>
+
+    <h2>Many points</h2>
+    <p>Seurat painted <em>A Sunday on La Grande Jatte</em> (1884–86) in small touches of unmixed colour and left the mixing to the eye. Halftone printing does the same with ink. The old stipple engravings in anatomy and botany books do it with a pen. In all of them, tone is density: the number of points in a given area.</p>
+    <p>Xenakis brought the idea into music. In <em>Pithoprakta</em> (1955–56) he gave 46 string players separate parts and treated them like molecules in a gas. Each part follows the statistics of molecular motion, so no single line goes anywhere, but the mass drifts and heats and cools. A few years later, in <em>Analogique B</em>, he built a piece from tiny grains of sound, an early version of what is now called granular synthesis. The note becomes a point, and the sound becomes a cloud of them.</p>
+  </article>
+
+  <section class="studies-wrap" aria-labelledby="studies-title">
+    <div class="studies-head">
+      <span class="label" id="studies-title">Four studies, points only</span>
+      <button type="button" id="replot-all" class="label">Replot all</button>
+    </div>
+    <div class="studies" id="studies"></div>
+  </section>
+
+  <section class="reading">
+    <span class="label">Further reading</span>
+    <ul>
+      <li><a href="https://bauhaus-bookshelf.org/bauhaus-book-9-vassily-kandinsky-point-and-line-to-plane_pdf.html" target="_blank" rel="noopener">Point and Line to Plane</a> <span>— Kandinsky's Bauhaus book, 1926.</span></li>
+      <li><a href="https://en.wikipedia.org/wiki/Pithoprakta" target="_blank" rel="noopener">Pithoprakta</a> <span>— Xenakis's string orchestra as a gas.</span></li>
+      <li><a href="https://www.iannis-xenakis.org/en/?p=3720" target="_blank" rel="noopener">Xenakis at iannis-xenakis.org</a> <span>— the stochastic works in context.</span></li>
+      <li><a href="https://en.wikipedia.org/wiki/Granular_synthesis" target="_blank" rel="noopener">Granular synthesis</a> <span>— sound built from grains.</span></li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    <div>
+      <div class="label">Correspondence</div>
+      <span class="mobile-hide"><a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;sean&#64;chambersandchambers.co">sean&#64;chambersandchambers.co</a><br></span>
+      <a href="tel:+61447727477">0447 727 477</a>
+    </div>
+    <div>
+      <div class="label">Location</div>
+      Melbourne<span class="mobile-hide"> · Barnawartha · Byron Shire</span>
+    </div>
+  </footer>
+
+<script>
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var INK = '#1d1b17', SOFT = '#6b655c', PAPER = '#f2ede5', RULE = '#d8d1c4';
+
+  function rng(seed) {
+    return function () {
+      seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) { return Math.sqrt(-2 * Math.log(r() || 1e-9)) * Math.cos(2 * Math.PI * r()); }
+  // A dot: [x, y, radius, colour (0 ink, 1 soft), alpha]
+  function dot(x, y, rad, c, a) { return [x, y, rad, c || 0, a == null ? 0.85 : a]; }
+
+  var hero = {
+    seed: 11, reseed: true,
+    unit: function (n) { return n.toLocaleString('en-AU') + ' points'; },
+    dots: function (n, st) {
+      var r = rng(st.seed), d = [], cx = 470, cy = 430, R = 330;
+      var L = [-0.55, -0.6, 0.58], ll = Math.hypot(L[0], L[1], L[2]); L = L.map(function (v) { return v / ll; });
+      var nSphere = Math.round(n * 0.78), tries = 0;
+      while (d.length < nSphere && tries < n * 40) {
+        tries++;
+        var x = r() * 2 - 1, y = r() * 2 - 1, q = x * x + y * y;
+        if (q > 1) continue;
+        var z = Math.sqrt(1 - q), b = Math.max(0, x * L[0] + y * L[1] + z * L[2]);
+        var p = 0.04 + 0.96 * Math.pow(1 - b, 1.6);
+        if (q > 0.96) p = Math.max(p, 0.55);
+        if (r() < p) d.push(dot(cx + x * R, cy + y * R, 2.1, 0));
+      }
+      var nShadow = n - d.length; tries = 0;
+      while (nShadow > 0 && tries < n * 40) {
+        tries++;
+        var sx = r() * 2 - 1, sy = r() * 2 - 1, sq = sx * sx + sy * sy;
+        if (sq > 1) continue;
+        if (r() < Math.pow(1 - sq, 1.4) * 0.9) { d.push(dot(cx + 120 + sx * 330, cy + 400 + sy * 62, 2, 1, 0.75)); nShadow--; }
+      }
+      return d;
+    }
+  };
+
+  var studies = [
+    { title: 'Seed head', min: 50, max: 2400, val: 900, step: 10,
+      unit: function (n, st) { return n + ' · ' + st.angles[st.ai] + '°'; },
+      text: 'Each seed placed about 137.5° around from the last, as in a sunflower. Replot changes the angle.',
+      angles: [137.5, 137.3, 137.7, 99.5, 160.0, 222.5], ai: 0,
+      onReplot: function (st) { st.ai = (st.ai + 1) % st.angles.length; },
+      dots: function (n, st) {
+        var a = st.angles[st.ai] * Math.PI / 180, d = [];
+        for (var i = 0; i < n; i++) {
+          var t = Math.sqrt((i + 0.5) / n);
+          d.push(dot(500 + 410 * t * Math.cos(i * a), 500 + 410 * t * Math.sin(i * a), 2 + 5 * t, i % 2, 0.8));
+        }
+        return d;
+      } },
+    { title: 'Pizzicati', min: 200, max: 4000, val: 1600, step: 50,
+      unit: function (n) { return n + ' notes'; },
+      text: 'Clouds of short notes on a pitch–time graph, after Pithoprakta. Replot plays a new score.',
+      seed: 1956, reseed: true, grid: true,
+      dots: function (n, st) {
+        var r = rng(st.seed), clouds = [], k = 5, d = [];
+        for (var c = 0; c < k; c++) clouds.push({ x: 140 + 720 * (c + r() * 0.8) / k, y: 200 + r() * 600, sx: 40 + r() * 90, sy: 30 + r() * 150, w: 0.5 + r() });
+        var wsum = clouds.reduce(function (s, c) { return s + c.w; }, 0);
+        clouds.forEach(function (c, ci) {
+          var m = Math.round(n * c.w / wsum);
+          for (var i = 0; i < m; i++) {
+            var x = c.x + gauss(r) * c.sx, y = c.y + gauss(r) * c.sy;
+            if (x > 70 && x < 930 && y > 70 && y < 930) d.push(dot(x, y, 2.2, ci % 2, 0.8));
+          }
+        });
+        return d;
+      } },
+    { title: 'Halftone', min: 12, max: 64, val: 34, step: 1,
+      unit: function (n) { return n + ' × ' + n; },
+      text: 'One grid of dots. Only their size changes, and two ripples appear. Replot moves the sources.',
+      seed: 3, reseed: true,
+      dots: function (n, st) {
+        var r = rng(st.seed), a = [150 + r() * 700, 150 + r() * 700], b = [150 + r() * 700, 150 + r() * 700];
+        var s = 860 / n, d = [];
+        for (var i = 0; i < n; i++) for (var j = 0; j < n; j++) {
+          var x = 70 + (i + 0.5) * s, y = 70 + (j + 0.5) * s;
+          var v = 0.5 + 0.25 * Math.sin(Math.hypot(x - a[0], y - a[1]) / 38) + 0.25 * Math.sin(Math.hypot(x - b[0], y - b[1]) / 52);
+          if (v > 0.04) d.push(dot(x, y, s * 0.5 * v, 0, 0.9));
+        }
+        return d;
+      } },
+    { title: 'Even scatter', min: 10, max: 60, val: 22, step: 1,
+      unit: function (n) { return n + ' min. spacing'; },
+      text: 'Random points that keep a set distance apart, the basis of good stippling. Replot scatters again.',
+      seed: 21, reseed: true,
+      dots: function (minD, st) {
+        // Bridson's Poisson-disc sampling inside a circle
+        var r = rng(st.seed), cell = minD / Math.SQRT2, gw = Math.ceil(1000 / cell);
+        var grid = new Array(gw * gw), pts = [], active = [], R = 420;
+        function inside(p) { return Math.hypot(p[0] - 500, p[1] - 500) < R; }
+        function gi(p) { return Math.floor(p[0] / cell) + Math.floor(p[1] / cell) * gw; }
+        function ok(p) {
+          if (!inside(p)) return false;
+          var cx = Math.floor(p[0] / cell), cy = Math.floor(p[1] / cell);
+          for (var y = Math.max(0, cy - 2); y <= Math.min(gw - 1, cy + 2); y++)
+            for (var x = Math.max(0, cx - 2); x <= Math.min(gw - 1, cx + 2); x++) {
+              var q = grid[x + y * gw];
+              if (q && Math.hypot(q[0] - p[0], q[1] - p[1]) < minD) return false;
+            }
+          return true;
+        }
+        var first = [500, 500]; pts.push(first); active.push(first); grid[gi(first)] = first;
+        while (active.length) {
+          var idx = Math.floor(r() * active.length), base = active[idx], found = false;
+          for (var k = 0; k < 30; k++) {
+            var ang = r() * 2 * Math.PI, rad = minD * (1 + r());
+            var p = [base[0] + rad * Math.cos(ang), base[1] + rad * Math.sin(ang)];
+            if (ok(p)) { pts.push(p); active.push(p); grid[gi(p)] = p; found = true; break; }
+          }
+          if (!found) active.splice(idx, 1);
+        }
+        return pts.map(function (p) {
+          var dist = Math.hypot(p[0] - 500, p[1] - 500) / R;
+          return dot(p[0], p[1], 1.6 + minD * 0.09, dist > 0.6 ? 1 : 0, 0.85);
+        });
+      } }
+  ];
+
+  function frame(st, d, upto) {
+    var ctx = st.ctx;
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, 1000, 1000);
+    if (st.grid) {
+      ctx.strokeStyle = RULE; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(70, 930); ctx.lineTo(930, 930); ctx.moveTo(70, 70); ctx.lineTo(70, 930); ctx.stroke();
+    }
+    for (var i = 0; i < upto; i++) {
+      var g = d[i];
+      ctx.fillStyle = g[3] === 0 ? INK : SOFT;
+      ctx.globalAlpha = g[4];
+      ctx.beginPath(); ctx.arc(g[0], g[1], g[2], 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function draw(st, animate) {
+    var n = parseFloat(st.slider.value);
+    st.count.textContent = st.unit(n, st);
+    var d = st.dots(n, st);
+    if (st.anim) { cancelAnimationFrame(st.anim); st.anim = null; }
+    if (!animate || reduce) { frame(st, d, d.length); return; }
+    var i = 0, step = Math.max(1, Math.ceil(d.length / 110));
+    (function tick() {
+      i = Math.min(d.length, i + step);
+      frame(st, d, i);
+      if (i < d.length) st.anim = requestAnimationFrame(tick);
+    })();
+  }
+
+  function replot(st) {
+    if (st.reseed) st.seed = (st.seed * 31 + 17) | 0;
+    if (st.onReplot) st.onReplot(st);
+    draw(st, true);
+  }
+
+  hero.canvas = document.getElementById('hero');
+  hero.ctx = hero.canvas.getContext('2d');
+  hero.slider = document.getElementById('hero-n');
+  hero.count = document.getElementById('hero-count');
+  hero.slider.addEventListener('change', function () { draw(hero, false); });
+  hero.slider.addEventListener('input', function () { hero.count.textContent = hero.unit(parseFloat(hero.slider.value)); });
+  document.getElementById('hero-replot').addEventListener('click', function () { replot(hero); });
+
+  var host = document.getElementById('studies');
+  studies.forEach(function (st, idx) {
+    var id = 'study-' + idx;
+    var fig = document.createElement('figure');
+    fig.className = 'study';
+    fig.innerHTML =
+      '<canvas width="1000" height="1000" aria-label="' + st.title + '"></canvas>' +
+      '<h3>' + st.title + '</h3><p>' + st.text + '</p>' +
+      '<div class="controls"><label for="' + id + '"><input id="' + id + '" type="range" min="' + st.min + '" max="' + st.max + '" step="' + st.step + '" value="' + st.val + '"> <span class="count"></span></label>' +
+      '<button type="button">Replot</button></div>';
+    host.appendChild(fig);
+    st.canvas = fig.querySelector('canvas');
+    st.ctx = st.canvas.getContext('2d');
+    st.slider = fig.querySelector('input');
+    st.count = fig.querySelector('.count');
+    st.slider.addEventListener('input', function () { draw(st, false); });
+    fig.querySelector('button').addEventListener('click', function () { replot(st); });
+  });
+
+  document.getElementById('replot-all').addEventListener('click', function () { studies.forEach(replot); });
+
+  draw(hero, !reduce);
+  studies.forEach(function (st) { draw(st, false); });
+})();
+</script>
+</body>
+</html>

@@ -92,12 +92,20 @@
     color: var(--ink);
   }
 
-  .inquiry {
-    align-self: flex-start;
+  .inquiry-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.1rem;
     margin-top: 2rem;
     font-size: clamp(0.7rem, 0.9vw, 0.8rem);
     letter-spacing: 0.15em;
     text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .inquiry-list span { opacity: 0.6; }
+
+  .inquiry {
     color: var(--ink-soft);
     text-decoration: none;
     border-bottom: 1px solid var(--rule);
@@ -239,7 +247,11 @@
       In the meantime, please be in touch.
       <span class="sig">— Sean</span>
     </p>
-    <a class="inquiry" href="/the-curve/">Inquiry · The Curve</a>
+    <nav class="inquiry-list" aria-label="Inquiry">
+      <span>Inquiry</span>
+      <a class="inquiry" href="/the-point/">The Point</a>
+      <a class="inquiry" href="/the-curve/">The Curve</a>
+    </nav>
   </main>
 
   <footer class="foot">
