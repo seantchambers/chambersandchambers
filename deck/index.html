@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Deck</title>
+<style>
+  :root {
+    --bg: #15171a; --panel: #1d2024; --line: #2d3136; --text: #e9e6df;
+    --mute: #8a8e95; --accent: #c9a45c; --cw: 170px;
+    --ch: calc(var(--cw) * 1.397); --strip: calc(var(--cw) * 0.16);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    display: flex; flex-direction: column;
+  }
+  button, input, select, textarea {
+    font: inherit; color: var(--text); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px;
+  }
+  button { cursor: pointer; white-space: nowrap; }
+  button:hover { border-color: var(--mute); }
+  input:focus, select:focus, textarea:focus, button:focus-visible { outline: 1px solid var(--accent); outline-offset: 0; }
+
+  header {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 10px 14px; border-bottom: 1px solid var(--line);
+  }
+  header .spacer { flex: 1; }
+  #deckSelect { max-width: 220px; }
+  #count { color: var(--mute); padding: 0 6px; }
+  .search { position: relative; flex: 1 1 240px; max-width: 380px; }
+  .search input { width: 100%; }
+  #results {
+    position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px);
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+    list-style: none; margin: 0; padding: 4px; max-height: 60vh; overflow: auto;
+  }
+  #results:empty { display: none; }
+  #results li { padding: 6px 8px; border-radius: 3px; cursor: pointer; }
+  #results li.on, #results li:hover { background: var(--line); }
+  #size { width: 90px; padding: 0; }
+  #status { color: var(--mute); font-size: 12px; min-height: 1em; padding: 0 14px; }
+
+  #board {
+    flex: 1; display: flex; gap: 14px; align-items: flex-start;
+    padding: 14px; overflow: auto;
+  }
+  .col {
+    flex: 0 0 auto; width: calc(var(--cw) + 16px);
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  }
+  .col.active { border-color: var(--accent); }
+  .col.over { background: #23272c; }
+  .col-head { display: flex; align-items: center; gap: 2px; padding: 6px 6px 4px 8px; }
+  .col-head input {
+    flex: 1; min-width: 0; border-color: transparent; background: transparent;
+    padding: 2px 4px; font-weight: 600;
+  }
+  .col-head .n { color: var(--mute); font-size: 12px; padding: 0 4px; }
+  .col-head button { border: 0; background: transparent; color: var(--mute); padding: 2px 5px; }
+  .col-head button:hover { color: var(--text); }
+  .cards { padding: 4px 8px 10px; min-height: 80px; }
+
+  .card {
+    position: relative; width: var(--cw); height: var(--ch);
+    margin-bottom: calc(var(--strip) - var(--ch));
+    border-radius: 4.75% / 3.4%; background: #000; cursor: grab; overflow: hidden;
+    box-shadow: 0 -1px 2px rgba(0,0,0,.6);
+  }
+  .card:last-child { margin-bottom: 0; }
+  body.spread .card { margin-bottom: 8px; }
+  .card img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+  .card .nm { position: absolute; left: 8px; top: 5px; right: 8px; font-size: 12px; color: var(--mute); }
+  .card.dragging { opacity: .35; }
+  .card.drop-before { box-shadow: 0 -3px 0 var(--accent); }
+  .card.drop-after { box-shadow: 0 3px 0 var(--accent); }
+  .card .qty {
+    position: absolute; right: 5px; top: 4px; background: rgba(0,0,0,.8); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 9px;
+  }
+  .card .tools { position: absolute; right: 3px; top: 3px; display: none; gap: 2px; }
+  .card:hover .tools { display: flex; }
+  .card:hover .qty { display: none; }
+  .card .tools button {
+    padding: 0; width: 20px; height: 20px; line-height: 18px; font-size: 13px;
+    background: rgba(0,0,0,.85); border-color: #555; border-radius: 3px;
+  }
+  .add-col {
+    flex: 0 0 auto; border-style: dashed; color: var(--mute); background: transparent;
+    padding: 10px 16px;
+  }
+
+  #preview {
+    position: fixed; z-index: 40; width: 300px; pointer-events: none; display: none;
+    border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.7);
+  }
+
+  dialog {
+    background: var(--panel); color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 18px; width: min(520px, 92vw);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.6); }
+  dialog h2 { margin: 0 0 10px; font-size: 16px; }
+  dialog textarea { width: 100%; height: 300px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+  dialog .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  dialog .row .spacer { flex: 1; }
+  dialog .msg { color: var(--mute); font-size: 12px; margin-top: 8px; white-space: pre-wrap; }
+  .primary { background: var(--accent); color: #1a1505; border-color: var(--accent); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <select id="deckSelect" title="Deck"></select>
+  <button id="newDeck">New</button>
+  <button id="renameDeck">Rename</button>
+  <button id="deleteDeck">Delete</button>
+  <div class="search">
+    <input id="q" type="search" placeholder="Add a card…" autocomplete="off" spellcheck="false">
+    <ul id="results"></ul>
+  </div>
+  <span id="count"></span>
+  <span class="spacer"></span>
+  <input id="size" type="range" min="110" max="260" step="10" title="Card size">
+  <button id="toggleView" title="Stack or spread the cards">Spread</button>
+  <button id="importBtn">Import list</button>
+  <button id="exportBtn">Export list</button>
+  <button id="backupBtn">Backup</button>
+</header>
+<div id="status"></div>
+<main id="board"></main>
+<img id="preview" alt="">
+<dialog id="dlg"></dialog>
+<input id="file" type="file" accept="application/json,.json" hidden>
+
+<script>
+(function () {
+  'use strict';
+  var KEY = 'deckbuilder.v1';
+  var API = 'https://api.scryfall.com';
+  var TYPES = ['Creature', 'Planeswalker', 'Instant', 'Sorcery', 'Artifact', 'Enchantment', 'Battle', 'Land'];
+  var $ = function (id) { return document.getElementById(id); };
+  var el = function (tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  };
+  var uid = function () { return Math.random().toString(36).slice(2, 10); };
+  var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+  // ---------- state ----------
+  function newCol(name) { return { id: uid(), name: name, cards: [] }; }
+  function newDeck(name) {
+    var main = newCol('Main');
+    return { id: uid(), name: name || 'Untitled deck', active: main.id, columns: [main, newCol('Maybe')] };
+  }
+  function valid(s) {
+    return s && Array.isArray(s.decks) && s.decks.length && s.decks.every(function (d) {
+      return d && d.id && Array.isArray(d.columns);
+    });
+  }
+  function load() {
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY));
+      if (valid(s)) return s;
+    } catch (e) {}
+    var d = newDeck('My deck');
+    return { decks: [d], current: d.id, size: 170, spread: false };
+  }
+  var state = load();
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { status('Could not save in this browser. Use Backup to keep a copy.'); }
+  }
+  function deck() {
+    var d = state.decks.filter(function (x) { return x.id === state.current; })[0];
+    if (!d) { d = state.decks[0]; state.current = d.id; }
+    if (!d.columns.length) d.columns.push(newCol('Main'));
+    return d;
+  }
+  function activeCol() {
+    var d = deck();
+    var c = d.columns.filter(function (x) { return x.id === d.active; })[0];
+    if (!c) { c = d.columns[0]; d.active = c.id; }
+    return c;
+  }
+  function colCount(c) { return c.cards.reduce(function (n, k) { return n + (k.qty || 1); }, 0); }
+  function status(msg) { $('status').textContent = msg || ''; }
+
+  // ---------- Scryfall ----------
+  var nextAt = 0;
+  function sf(path, opts) {
+    var wait = Math.max(0, nextAt - Date.now());
+    nextAt = Date.now() + wait + 120;
+    return sleep(wait).then(function () { return fetch(API + path, opts); }).then(function (r) {
+      if (!r.ok) { var e = new Error('Scryfall ' + r.status); e.status = r.status; throw e; }
+      return r.json();
+    });
+  }
+  function imgOf(c) {
+    if (c.image_uris) return c.image_uris.normal;
+    if (c.card_faces && c.card_faces[0] && c.card_faces[0].image_uris) return c.card_faces[0].image_uris.normal;
+    return '';
+  }
+  function typeOf(c) {
+    var t = (c.type_line || (c.card_faces && c.card_faces[0] && c.card_faces[0].type_line) || '').split(' // ')[0];
+    for (var i = 0; i < TYPES.length; i++) if (t.indexOf(TYPES[i]) !== -1) return TYPES[i];
+    return 'Other';
+  }
+  function resolveNames(names) {
+    var out = {}, missing = [];
+    var chunks = [];
+    for (var i = 0; i < names.length; i += 75) chunks.push(names.slice(i, i + 75));
+    var p = Promise.resolve();
+    chunks.forEach(function (chunk) {
+      p = p.then(function () {
+        return sf('/cards/collection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifiers: chunk.map(function (n) { return { name: n }; }) })
+        });
+      }).then(function (res) {
+        var idx = {};
+        (res.data || []).forEach(function (c) {
+          idx[c.name.toLowerCase()] = c;
+          c.name.split(' // ').forEach(function (part) { idx[part.toLowerCase()] = c; });
+        });
+        chunk.forEach(function (n) {
+          var c = idx[n.toLowerCase()] || idx[n.split(' // ')[0].toLowerCase()];
+          if (c) out[n] = c; else missing.push(n);
+        });
+      });
+    });
+    return p.then(function () {
+      var q = Promise.resolve();
+      missing.forEach(function (n) {
+        q = q.then(function () {
+          return sf('/cards/named?fuzzy=' + encodeURIComponent(n)).then(function (c) { out[n] = c; }, function () {});
+        });
+      });
+      return q;
+    }).then(function () { return out; });
+  }
+
+  // ---------- mutations ----------
+  function addTo(col, name, img, qty) {
+    var hit = col.cards.filter(function (k) { return k.name === name; })[0];
+    if (hit) hit.qty = (hit.qty || 1) + qty;
+    else col.cards.push({ id: uid(), name: name, img: img, qty: qty });
+  }
+  function findCard(id) {
+    var cols = deck().columns;
+    for (var i = 0; i < cols.length; i++)
+      for (var j = 0; j < cols[i].cards.length; j++)
+        if (cols[i].cards[j].id === id) return { col: cols[i], index: j, card: cols[i].cards[j] };
+    return null;
+  }
+  function colByName(name) {
+    var d = deck();
+    var c = d.columns.filter(function (x) { return x.name.toLowerCase() === name.toLowerCase(); })[0];
+    if (!c) {
+      c = newCol(name);
+      var maybe = d.columns.map(function (x) { return x.name.toLowerCase(); }).indexOf('maybe');
+      if (maybe === -1) d.columns.push(c); else d.columns.splice(maybe, 0, c);
+    }
+    return c;
+  }
+
+  // ---------- render ----------
+  var board = $('board'), preview = $('preview');
+  var drag = null;
+
+  function render() {
+    var d = deck();
+    document.documentElement.style.setProperty('--cw', (state.size || 170) + 'px');
+    document.body.classList.toggle('spread', !!state.spread);
+    $('toggleView').textContent = state.spread ? 'Stack' : 'Spread';
+    $('size').value = state.size || 170;
+
+    var sel = $('deckSelect');
+    sel.textContent = '';
+    state.decks.forEach(function (x) {
+      var o = el('option', null, x.name); o.value = x.id; o.selected = x.id === d.id; sel.appendChild(o);
+    });
+
+    var total = d.columns.reduce(function (n, c) { return n + colCount(c); }, 0);
+    $('count').textContent = total + (total === 1 ? ' card' : ' cards');
+
+    var active = activeCol();
+    board.textContent = '';
+    d.columns.forEach(function (c, ci) { board.appendChild(colEl(c, ci, c.id === active.id)); });
+    var add = el('button', 'add-col', '+ Column');
+    add.onclick = function () {
+      var c = newCol('New column'); d.columns.push(c); d.active = c.id; save(); render();
+    };
+    board.appendChild(add);
+  }
+
+  function colEl(c, ci, isActive) {
+    var d = deck();
+    var wrap = el('section', 'col' + (isActive ? ' active' : ''));
+    var head = el('div', 'col-head');
+    var name = el('input'); name.value = c.name; name.title = 'Column name';
+    name.onchange = function () { c.name = name.value.trim() || 'Column'; save(); };
+    name.onfocus = function () {
+      if (d.active === c.id) return;
+      d.active = c.id; save();
+      Array.prototype.forEach.call(board.querySelectorAll('.col'), function (x) { x.classList.remove('active'); });
+      wrap.classList.add('active');
+    };
+    var n = el('span', 'n', String(colCount(c)));
+    var left = el('button', null, '‹'); left.title = 'Move left';
+    var right = el('button', null, '›'); right.title = 'Move right';
+    var del = el('button', null, '×'); del.title = 'Delete column';
+    left.onclick = function () { moveCol(ci, -1); };
+    right.onclick = function () { moveCol(ci, 1); };
+    del.onclick = function () {
+      if (c.cards.length && !confirm('Delete "' + c.name + '" and its ' + colCount(c) + ' cards?')) return;
+      d.columns.splice(ci, 1); save(); render();
+    };
+    [name, n, left, right, del].forEach(function (x) { head.appendChild(x); });
+    wrap.appendChild(head);
+
+    var list = el('div', 'cards');
+    c.cards.forEach(function (k) { list.appendChild(cardEl(k, c)); });
+    wrap.appendChild(list);
+
+    wrap.addEventListener('mousedown', function () { d.active = c.id; });
+    wrap.addEventListener('dragover', function (e) {
+      if (!drag) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      clearMarks();
+      wrap.classList.add('over');
+      var cards = Array.prototype.filter.call(list.children, function (x) { return x.dataset.id !== drag.id; });
+      var index = cards.length;
+      for (var i = 0; i < cards.length; i++) {
+        var r = cards[i].getBoundingClientRect();
+        var bottom = i + 1 < cards.length ? cards[i + 1].getBoundingClientRect().top : r.bottom;
+        if (e.clientY < (r.top + bottom) / 2) { index = i; break; }
+      }
+      drag.col = c.id; drag.index = index;
+      if (index < cards.length) cards[index].classList.add('drop-before');
+      else if (cards.length) cards[cards.length - 1].classList.add('drop-after');
+    });
+    wrap.addEventListener('drop', function (e) {
+      if (!drag) return;
+      e.preventDefault();
+      var from = findCard(drag.id);
+      if (!from) return;
+      from.col.cards.splice(from.index, 1);
+      var same = c.cards.filter(function (k) { return k.name === from.card.name; })[0];
+      if (same && from.col !== c) same.qty = (same.qty || 1) + (from.card.qty || 1);
+      else c.cards.splice(Math.min(drag.index, c.cards.length), 0, from.card);
+      d.active = c.id;
+      drag = null; save(); render();
+    });
+    return wrap;
+  }
+
+  function cardEl(k, c) {
+    var e = el('div', 'card');
+    e.draggable = true; e.dataset.id = k.id; e.title = k.name;
+    e.appendChild(el('span', 'nm', k.name));
+    if (k.img) {
+      var img = el('img'); img.src = k.img; img.alt = k.name; img.loading = 'lazy'; img.draggable = false;
+      img.onerror = function () { img.remove(); };
+      e.appendChild(img);
+    }
+    if ((k.qty || 1) > 1) e.appendChild(el('span', 'qty', '×' + k.qty));
+    var tools = el('span', 'tools');
+    var minus = el('button', null, '−'); minus.title = 'One fewer';
+    var plus = el('button', null, '+'); plus.title = 'One more';
+    var rm = el('button', null, '×'); rm.title = 'Remove';
+    minus.onclick = function () {
+      k.qty = (k.qty || 1) - 1;
+      if (k.qty < 1) c.cards.splice(c.cards.indexOf(k), 1);
+      hidePreview(); save(); render();
+    };
+    plus.onclick = function () { k.qty = (k.qty || 1) + 1; save(); render(); };
+    rm.onclick = function () { c.cards.splice(c.cards.indexOf(k), 1); hidePreview(); save(); render(); };
+    [minus, plus, rm].forEach(function (b) { tools.appendChild(b); });
+    e.appendChild(tools);
+
+    e.addEventListener('dragstart', function (ev) {
+      drag = { id: k.id, col: c.id, index: 0 };
+      ev.dataTransfer.effectAllowed = 'move';
+      try { ev.dataTransfer.setData('text/plain', k.name); } catch (x) {}
+      hidePreview();
+      setTimeout(function () { e.classList.add('dragging'); }, 0);
+    });
+    e.addEventListener('dragend', function () { drag = null; e.classList.remove('dragging'); clearMarks(); });
+    e.addEventListener('mousemove', function (ev) { if (!drag && k.img) showPreview(k.img, ev); });
+    e.addEventListener('mouseleave', hidePreview);
+    return e;
+  }
+
+  function clearMarks() {
+    Array.prototype.forEach.call(board.querySelectorAll('.drop-before,.drop-after,.over'), function (x) {
+      x.classList.remove('drop-before', 'drop-after', 'over');
+    });
+  }
+  function moveCol(i, dir) {
+    var cols = deck().columns, j = i + dir;
+    if (j < 0 || j >= cols.length) return;
+    var t = cols[i]; cols[i] = cols[j]; cols[j] = t;
+    save(); render();
+  }
+  function showPreview(src, ev) {
+    if (state.spread && (state.size || 170) >= 240) return;
+    if (preview.getAttribute('src') !== src) preview.src = src;
+    var w = 300, h = 419, x = ev.clientX + 28, y = ev.clientY - h / 2;
+    if (x + w > window.innerWidth - 8) x = ev.clientX - w - 28;
+    y = Math.max(8, Math.min(y, window.innerHeight - h - 8));
+    preview.style.left = x + 'px'; preview.style.top = y + 'px'; preview.style.display = 'block';
+  }
+  function hidePreview() { preview.style.display = 'none'; }
+
+  // ---------- search ----------
+  var q = $('q'), results = $('results'), seq = 0, timer = null, sel = 0;
+  function showResults(names) {
+    results.textContent = ''; sel = 0;
+    names.slice(0, 12).forEach(function (n, i) {
+      var li = el('li', i === 0 ? 'on' : null, n);
+      li.onmousedown = function (e) { e.preventDefault(); addByName(n); };
+      results.appendChild(li);
+    });
+  }
+  function addByName(name) {
+    results.textContent = ''; q.value = ''; status('Adding ' + name + '…');
+    sf('/cards/named?exact=' + encodeURIComponent(name)).then(function (c) {
+      addTo(activeCol(), c.name, imgOf(c), 1);
+      save(); render(); status(''); q.focus();
+    }, function () { status('Could not find "' + name + '".'); });
+  }
+  q.addEventListener('input', function () {
+    clearTimeout(timer);
+    var v = q.value.trim();
+    if (v.length < 2) { results.textContent = ''; return; }
+    timer = setTimeout(function () {
+      var mine = ++seq;
+      sf('/cards/autocomplete?q=' + encodeURIComponent(v)).then(function (r) {
+        if (mine === seq) showResults(r.data || []);
+      }, function () {});
+    }, 200);
+  });
+  q.addEventListener('keydown', function (e) {
+    var items = results.children;
+    if (e.key === 'Escape') { results.textContent = ''; return; }
+    if (!items.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[sel].classList.remove('on');
+      sel = (sel + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length;
+      items[sel].classList.add('on');
+      items[sel].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault(); addByName(items[sel].textContent);
+    }
+  });
+  q.addEventListener('blur', function () { setTimeout(function () { results.textContent = ''; }, 150); });
+
+  // ---------- deck controls ----------
+  $('deckSelect').onchange = function (e) { state.current = e.target.value; save(); render(); };
+  $('newDeck').onclick = function () {
+    var name = prompt('Deck name', 'New deck');
+    if (name == null) return;
+    var d = newDeck(name.trim()); state.decks.push(d); state.current = d.id; save(); render();
+  };
+  $('renameDeck').onclick = function () {
+    var d = deck(), name = prompt('Deck name', d.name);
+    if (name == null || !name.trim()) return;
+    d.name = name.trim(); save(); render();
+  };
+  $('deleteDeck').onclick = function () {
+    var d = deck();
+    if (!confirm('Delete "' + d.name + '"? This cannot be undone.')) return;
+    state.decks = state.decks.filter(function (x) { return x.id !== d.id; });
+    if (!state.decks.length) state.decks.push(newDeck('My deck'));
+    state.current = state.decks[0].id; save(); render();
+  };
+  $('toggleView').onclick = function () { state.spread = !state.spread; save(); render(); };
+  $('size').oninput = function (e) {
+    state.size = +e.target.value;
+    document.documentElement.style.setProperty('--cw', state.size + 'px');
+  };
+  $('size').onchange = save;
+
+  // ---------- import / export ----------
+  var dlg = $('dlg');
+  function openDlg(title) {
+    dlg.textContent = '';
+    dlg.appendChild(el('h2', null, title));
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+  }
+  function closeDlg() { if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); }
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) closeDlg(); });
+
+  function parseList(text) {
+    var order = [], qty = {};
+    text.split(/\r?\n/).forEach(function (line) {
+      line = line.trim();
+      if (!line || /^(\/\/|#)/.test(line)) return;
+      if (/^(commander|deck|main|mainboard|sideboard|maybeboard|companion|considering)s?:?$/i.test(line)) return;
+      var m = line.match(/^(\d+)\s*x?\s+(.+)$/i);
+      var n = m ? parseInt(m[1], 10) : 1;
+      var name = (m ? m[2] : line).replace(/\s+\([A-Za-z0-9]{2,6}\)(\s.*)?$/, '').replace(/\s+\*[A-Z]+\*$/, '').trim();
+      if (!name) return;
+      if (!(name in qty)) { qty[name] = 0; order.push(name); }
+      qty[name] += n;
+    });
+    return { order: order, qty: qty };
+  }
+
+  $('importBtn').onclick = function () {
+    openDlg('Import a card list');
+    var ta = el('textarea'); ta.placeholder = '1 Sol Ring\n1 Command Tower\n10 Forest';
+    var row = el('div', 'row');
+    var label = el('label');
+    var split = el('input'); split.type = 'checkbox'; split.checked = true;
+    label.appendChild(split); label.appendChild(document.createTextNode(' Sort into columns by card type'));
+    var go = el('button', 'primary', 'Import');
+    var cancel = el('button', null, 'Cancel'); cancel.onclick = closeDlg;
+    row.appendChild(label); row.appendChild(el('span', 'spacer')); row.appendChild(cancel); row.appendChild(go);
+    var msg = el('div', 'msg', 'One card per line. Unticked, cards go into the highlighted column.');
+    dlg.appendChild(ta); dlg.appendChild(row); dlg.appendChild(msg);
+    ta.focus();
+    go.onclick = function () {
+      var list = parseList(ta.value);
+      if (!list.order.length) { msg.textContent = 'Nothing to import.'; return; }
+      go.disabled = true; msg.textContent = 'Looking up ' + list.order.length + ' cards…';
+      resolveNames(list.order).then(function (found) {
+        var target = activeCol(), missed = [];
+        list.order.forEach(function (n) {
+          var c = found[n];
+          if (!c) { missed.push(n); return; }
+          addTo(split.checked ? colByName(typeOf(c)) : target, c.name, imgOf(c), list.qty[n]);
+        });
+        save(); render(); go.disabled = false;
+        if (missed.length) { msg.textContent = 'Imported. Not found:\n' + missed.join('\n'); ta.value = missed.join('\n'); }
+        else closeDlg();
+      }, function (e) {
+        go.disabled = false; msg.textContent = 'Lookup failed (' + e.message + '). Try again in a moment.';
+      });
+    };
+  };
+
+  $('exportBtn').onclick = function () {
+    var d = deck();
+    openDlg(d.name);
+    var lines = [];
+    d.columns.forEach(function (c) {
+      if (!c.cards.length) return;
+      if (lines.length) lines.push('');
+      lines.push('// ' + c.name + ' (' + colCount(c) + ')');
+      c.cards.forEach(function (k) { lines.push((k.qty || 1) + ' ' + k.name); });
+    });
+    var ta = el('textarea'); ta.readOnly = true; ta.value = lines.join('\n');
+    var row = el('div', 'row');
+    var copy = el('button', 'primary', 'Copy');
+    var close = el('button', null, 'Close'); close.onclick = closeDlg;
+    copy.onclick = function () {
+      ta.select();
+      var done = function () { copy.textContent = 'Copied'; };
+      if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(done, function () { document.execCommand('copy'); done(); });
+      else { document.execCommand('copy'); done(); }
+    };
+    row.appendChild(el('span', 'spacer')); row.appendChild(close); row.appendChild(copy);
+    dlg.appendChild(ta); dlg.appendChild(row);
+  };
+
+  $('backupBtn').onclick = function () {
+    openDlg('Backup');
+    var msg = el('div', 'msg', 'Decks are stored in this browser only. Save a file to keep a copy or move your decks to another device, then load it there.');
+    var row = el('div', 'row');
+    var dl = el('button', 'primary', 'Save file');
+    var up = el('button', null, 'Load file');
+    var close = el('button', null, 'Close'); close.onclick = closeDlg;
+    dl.onclick = function () {
+      var a = el('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 1)], { type: 'application/json' }));
+      a.download = 'decks-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    };
+    up.onclick = function () { $('file').click(); };
+    row.appendChild(dl); row.appendChild(up); row.appendChild(el('span', 'spacer')); row.appendChild(close);
+    dlg.appendChild(msg); dlg.appendChild(row);
+  };
+  $('file').onchange = function (e) {
+    var f = e.target.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var s = JSON.parse(r.result);
+        if (!valid(s)) throw new Error('bad file');
+        if (!confirm('Replace the ' + state.decks.length + ' deck(s) in this browser with the ' + s.decks.length + ' in this file?')) return;
+        state = s; save(); render(); closeDlg();
+      } catch (x) { alert('That file is not a deck backup.'); }
+    };
+    r.readAsText(f);
+    e.target.value = '';
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>
