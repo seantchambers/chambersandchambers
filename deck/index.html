@@ -110,6 +110,14 @@
   dialog .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
   dialog .row .spacer { flex: 1; }
   dialog .msg { color: var(--mute); font-size: 12px; margin-top: 8px; white-space: pre-wrap; }
+  dialog.wide { width: min(1080px, 95vw); }
+  .prints { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; align-items: start; max-height: 70vh; overflow: auto; padding: 2px; }
+  .print { padding: 0 0 6px; background: transparent; border: 2px solid transparent; border-radius: 8px; text-align: left; white-space: normal; }
+  .print:hover { border-color: var(--mute); }
+  .print.current { border-color: var(--accent); }
+  .print img { width: 100%; aspect-ratio: 63 / 88; border-radius: 4.75% / 3.4%; display: block; background: #000; }
+  .print .cap { display: block; font-size: 12px; padding: 5px 4px 0; }
+  .print .sub { display: block; font-size: 11px; color: var(--mute); padding: 0 4px; }
   .primary { background: var(--accent); color: #1a1505; border-color: var(--accent); font-weight: 600; }
 </style>
 </head>
@@ -198,7 +206,7 @@
   function sf(path, opts) {
     var wait = Math.max(0, nextAt - Date.now());
     nextAt = Date.now() + wait + 120;
-    return sleep(wait).then(function () { return fetch(API + path, opts); }).then(function (r) {
+    return sleep(wait).then(function () { return fetch(/^https:/.test(path) ? path : API + path, opts); }).then(function (r) {
       if (!r.ok) { var e = new Error('Scryfall ' + r.status); e.status = r.status; throw e; }
       return r.json();
     });
@@ -208,40 +216,55 @@
     if (c.card_faces && c.card_faces[0] && c.card_faces[0].image_uris) return c.card_faces[0].image_uris.normal;
     return '';
   }
+  function info(c) {
+    return { name: c.name, img: imgOf(c), set: c.set || '', cn: c.collector_number || '', setName: c.set_name || '', oid: c.oracle_id || (c.card_faces && c.card_faces[0] && c.card_faces[0].oracle_id) || '' };
+  }
+  function same(a, b) { return a.name === b.name && (a.set || '') === (b.set || '') && (a.cn || '') === (b.cn || ''); }
   function typeOf(c) {
     var t = (c.type_line || (c.card_faces && c.card_faces[0] && c.card_faces[0].type_line) || '').split(' // ')[0];
     for (var i = 0; i < TYPES.length; i++) if (t.indexOf(TYPES[i]) !== -1) return TYPES[i];
     return 'Other';
   }
-  function resolveNames(names) {
-    var out = {}, missing = [];
-    var chunks = [];
-    for (var i = 0; i < names.length; i += 75) chunks.push(names.slice(i, i + 75));
+  function nameHit(c, n) {
+    n = n.toLowerCase();
+    return c.name.toLowerCase() === n || c.name.toLowerCase().split(' // ').indexOf(n.split(' // ')[0]) !== -1;
+  }
+  // entries: [{name, set, cn}] -> array of Scryfall cards (or null), same order
+  function resolve(entries) {
+    var out = entries.map(function () { return null; });
     var p = Promise.resolve();
-    chunks.forEach(function (chunk) {
+    for (var i = 0; i < entries.length; i += 75) (function (start) {
+      var chunk = entries.slice(start, start + 75);
       p = p.then(function () {
         return sf('/cards/collection', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifiers: chunk.map(function (n) { return { name: n }; }) })
+          body: JSON.stringify({ identifiers: chunk.map(function (e) {
+            if (e.set && e.cn) return { set: e.set, collector_number: e.cn };
+            if (e.set) return { name: e.name, set: e.set };
+            return { name: e.name };
+          }) })
         });
       }).then(function (res) {
-        var idx = {};
-        (res.data || []).forEach(function (c) {
-          idx[c.name.toLowerCase()] = c;
-          c.name.split(' // ').forEach(function (part) { idx[part.toLowerCase()] = c; });
-        });
-        chunk.forEach(function (n) {
-          var c = idx[n.toLowerCase()] || idx[n.split(' // ')[0].toLowerCase()];
-          if (c) out[n] = c; else missing.push(n);
+        var data = res.data || [];
+        var used = [];
+        chunk.forEach(function (e, j) {
+          for (var x = 0; x < data.length; x++) {
+            var c = data[x];
+            if (used[x]) continue;
+            var ok = e.set && e.cn ? c.set === e.set && String(c.collector_number) === e.cn
+                                   : nameHit(c, e.name) && (!e.set || c.set === e.set);
+            if (ok) { used[x] = true; out[start + j] = c; break; }
+          }
         });
       });
-    });
+    })(i);
     return p.then(function () {
       var q = Promise.resolve();
-      missing.forEach(function (n) {
+      entries.forEach(function (e, i) {
+        if (out[i]) return;
         q = q.then(function () {
-          return sf('/cards/named?fuzzy=' + encodeURIComponent(n)).then(function (c) { out[n] = c; }, function () {});
+          return sf('/cards/named?fuzzy=' + encodeURIComponent(e.name)).then(function (c) { out[i] = c; }, function () {});
         });
       });
       return q;
@@ -249,10 +272,11 @@
   }
 
   // ---------- mutations ----------
-  function addTo(col, name, img, qty) {
-    var hit = col.cards.filter(function (k) { return k.name === name; })[0];
+  function addTo(col, c, qty) {
+    var k = info(c);
+    var hit = col.cards.filter(function (x) { return same(x, k); })[0];
     if (hit) hit.qty = (hit.qty || 1) + qty;
-    else col.cards.push({ id: uid(), name: name, img: img, qty: qty });
+    else { k.id = uid(); k.qty = qty; col.cards.push(k); }
   }
   function findCard(id) {
     var cols = deck().columns;
@@ -355,8 +379,8 @@
       var from = findCard(drag.id);
       if (!from) return;
       from.col.cards.splice(from.index, 1);
-      var same = c.cards.filter(function (k) { return k.name === from.card.name; })[0];
-      if (same && from.col !== c) same.qty = (same.qty || 1) + (from.card.qty || 1);
+      var dup = c.cards.filter(function (k) { return same(k, from.card); })[0];
+      if (dup && from.col !== c) dup.qty = (dup.qty || 1) + (from.card.qty || 1);
       else c.cards.splice(Math.min(drag.index, c.cards.length), 0, from.card);
       d.active = c.id;
       drag = null; save(); render();
@@ -366,7 +390,8 @@
 
   function cardEl(k, c) {
     var e = el('div', 'card');
-    e.draggable = true; e.dataset.id = k.id; e.title = k.name;
+    e.draggable = true; e.dataset.id = k.id;
+    e.title = k.name + (k.setName ? ' — ' + k.setName + ' #' + k.cn : '') + '\nDouble-click to choose a printing';
     e.appendChild(el('span', 'nm', k.name));
     if (k.img) {
       var img = el('img'); img.src = k.img; img.alt = k.name; img.loading = 'lazy'; img.draggable = false;
@@ -375,6 +400,8 @@
     }
     if ((k.qty || 1) > 1) e.appendChild(el('span', 'qty', '×' + k.qty));
     var tools = el('span', 'tools');
+    var pr = el('button', null, '✎'); pr.title = 'Choose printing';
+    pr.onclick = function () { openPrints(k); };
     var minus = el('button', null, '−'); minus.title = 'One fewer';
     var plus = el('button', null, '+'); plus.title = 'One more';
     var rm = el('button', null, '×'); rm.title = 'Remove';
@@ -385,9 +412,10 @@
     };
     plus.onclick = function () { k.qty = (k.qty || 1) + 1; save(); render(); };
     rm.onclick = function () { c.cards.splice(c.cards.indexOf(k), 1); hidePreview(); save(); render(); };
-    [minus, plus, rm].forEach(function (b) { tools.appendChild(b); });
+    [pr, minus, plus, rm].forEach(function (b) { tools.appendChild(b); });
     e.appendChild(tools);
 
+    e.addEventListener('dblclick', function (ev) { if (ev.target.tagName !== 'BUTTON') openPrints(k); });
     e.addEventListener('dragstart', function (ev) {
       drag = { id: k.id, col: c.id, index: 0 };
       ev.dataTransfer.effectAllowed = 'move';
@@ -435,7 +463,7 @@
   function addByName(name) {
     results.textContent = ''; q.value = ''; status('Adding ' + name + '…');
     sf('/cards/named?exact=' + encodeURIComponent(name)).then(function (c) {
-      addTo(activeCol(), c.name, imgOf(c), 1);
+      addTo(activeCol(), c, 1);
       save(); render(); status(''); q.focus();
     }, function () { status('Could not find "' + name + '".'); });
   }
@@ -495,7 +523,7 @@
   // ---------- import / export ----------
   var dlg = $('dlg');
   function openDlg(title) {
-    dlg.textContent = '';
+    dlg.textContent = ''; dlg.className = '';
     dlg.appendChild(el('h2', null, title));
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
   }
@@ -503,19 +531,72 @@
   dlg.addEventListener('click', function (e) { if (e.target === dlg) closeDlg(); });
 
   function parseList(text) {
-    var order = [], qty = {};
+    var list = [], seen = {};
     text.split(/\r?\n/).forEach(function (line) {
       line = line.trim();
       if (!line || /^(\/\/|#)/.test(line)) return;
       if (/^(commander|deck|main|mainboard|sideboard|maybeboard|companion|considering)s?:?$/i.test(line)) return;
       var m = line.match(/^(\d+)\s*x?\s+(.+)$/i);
       var n = m ? parseInt(m[1], 10) : 1;
-      var name = (m ? m[2] : line).replace(/\s+\([A-Za-z0-9]{2,6}\)(\s.*)?$/, '').replace(/\s+\*[A-Z]+\*$/, '').trim();
-      if (!name) return;
-      if (!(name in qty)) { qty[name] = 0; order.push(name); }
-      qty[name] += n;
+      var rest = (m ? m[2] : line).replace(/(\s+\*\w+\*)+$/, '').trim();
+      var p = rest.match(/^(.*?)\s+\(([A-Za-z0-9]{2,6})\)(?:\s+(\S+))?$/);
+      var e = p ? { name: p[1].trim(), set: p[2].toLowerCase(), cn: p[3] || '' } : { name: rest, set: '', cn: '' };
+      if (!e.name) return;
+      var key = [e.name, e.set, e.cn].join('|');
+      if (seen[key]) { seen[key].qty += n; return; }
+      e.qty = n; seen[key] = e; list.push(e);
     });
-    return { order: order, qty: qty };
+    return list;
+  }
+
+  // ---------- printings ----------
+  function openPrints(k) {
+    hidePreview();
+    openDlg(k.name);
+    dlg.className = 'wide';
+    var grid = el('div', 'prints');
+    var msg = el('div', 'msg', 'Loading printings…');
+    var row = el('div', 'row');
+    var close = el('button', null, 'Close'); close.onclick = closeDlg;
+    row.appendChild(el('span', 'spacer')); row.appendChild(close);
+    dlg.appendChild(grid); dlg.appendChild(msg); dlg.appendChild(row);
+    var query = (k.oid ? 'oracleid:' + k.oid : '!"' + k.name.replace(/"/g, '') + '"') + ' game:paper';
+    var count = 0, pages = 0;
+    function tile(c) {
+      var i = info(c);
+      var b = el('button', 'print' + (same(i, k) ? ' current' : ''));
+      var img = el('img'); img.src = i.img; img.alt = i.setName; img.loading = 'lazy';
+      var tags = [];
+      if (c.border_color === 'borderless') tags.push('borderless');
+      (c.frame_effects || []).forEach(function (f) {
+        if (['showcase', 'extendedart', 'etched', 'inverted'].indexOf(f) !== -1) tags.push(f === 'extendedart' ? 'extended art' : f);
+      });
+      if (c.full_art) tags.push('full art');
+      if (c.frame === '1997' && c.released_at > '2003') tags.push('retro frame');
+      var price = c.prices && (c.prices.usd || c.prices.usd_foil || c.prices.usd_etched);
+      var sub = [(c.released_at || '').slice(0, 4)].concat(tags);
+      if (price) sub.push('US$' + price + (c.prices.usd ? '' : ' foil'));
+      b.appendChild(img);
+      b.appendChild(el('span', 'cap', i.setName + ' · ' + (c.set || '').toUpperCase() + ' #' + i.cn));
+      b.appendChild(el('span', 'sub', sub.filter(Boolean).join(' · ')));
+      b.onclick = function () {
+        k.name = i.name; k.img = i.img; k.set = i.set; k.cn = i.cn; k.setName = i.setName; k.oid = i.oid;
+        save(); render(); closeDlg();
+      };
+      return b;
+    }
+    function page(url) {
+      sf(url).then(function (res) {
+        if (!dlg.open || dlg.firstChild.textContent !== k.name) return;
+        (res.data || []).forEach(function (c) { grid.appendChild(tile(c)); count++; });
+        pages++;
+        if (res.has_more && res.next_page && pages < 6) { msg.textContent = 'Loading more…'; page(res.next_page); }
+        else msg.textContent = count + ' printings, newest first. Prices are Scryfall US market prices, as a rough guide only.';
+        var cur = grid.querySelector('.current');
+        if (cur && pages === 1) cur.scrollIntoView({ block: 'nearest' });
+      }, function () { msg.textContent = 'Could not load printings. Try again in a moment.'; });
+    }
+    page('/cards/search?unique=prints&order=released&q=' + encodeURIComponent(query));
   }
 
   $('importBtn').onclick = function () {
@@ -528,19 +609,19 @@
     var go = el('button', 'primary', 'Import');
     var cancel = el('button', null, 'Cancel'); cancel.onclick = closeDlg;
     row.appendChild(label); row.appendChild(el('span', 'spacer')); row.appendChild(cancel); row.appendChild(go);
-    var msg = el('div', 'msg', 'One card per line. Unticked, cards go into the highlighted column.');
+    var msg = el('div', 'msg', 'One card per line. A set and number, e.g. “1 Sol Ring (CMM) 410”, keeps that printing. Unticked, cards go into the highlighted column.');
     dlg.appendChild(ta); dlg.appendChild(row); dlg.appendChild(msg);
     ta.focus();
     go.onclick = function () {
       var list = parseList(ta.value);
-      if (!list.order.length) { msg.textContent = 'Nothing to import.'; return; }
-      go.disabled = true; msg.textContent = 'Looking up ' + list.order.length + ' cards…';
-      resolveNames(list.order).then(function (found) {
+      if (!list.length) { msg.textContent = 'Nothing to import.'; return; }
+      go.disabled = true; msg.textContent = 'Looking up ' + list.length + ' cards…';
+      resolve(list).then(function (found) {
         var target = activeCol(), missed = [];
-        list.order.forEach(function (n) {
-          var c = found[n];
-          if (!c) { missed.push(n); return; }
-          addTo(split.checked ? colByName(typeOf(c)) : target, c.name, imgOf(c), list.qty[n]);
+        list.forEach(function (e, i) {
+          var c = found[i];
+          if (!c) { missed.push(e.name); return; }
+          addTo(split.checked ? colByName(typeOf(c)) : target, c, e.qty);
         });
         save(); render(); go.disabled = false;
         if (missed.length) { msg.textContent = 'Imported. Not found:\n' + missed.join('\n'); ta.value = missed.join('\n'); }
@@ -559,7 +640,7 @@
       if (!c.cards.length) return;
       if (lines.length) lines.push('');
       lines.push('// ' + c.name + ' (' + colCount(c) + ')');
-      c.cards.forEach(function (k) { lines.push((k.qty || 1) + ' ' + k.name); });
+      c.cards.forEach(function (k) { lines.push((k.qty || 1) + ' ' + k.name + (k.set ? ' (' + k.set.toUpperCase() + ')' + (k.cn ? ' ' + k.cn : '') : '')); });
     });
     var ta = el('textarea'); ta.readOnly = true; ta.value = lines.join('\n');
     var row = el('div', 'row');
